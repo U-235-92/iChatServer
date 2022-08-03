@@ -2,6 +2,10 @@ package aq.koptev.models.account;
 
 import aq.koptev.models.chat.ChatHistory;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 public class Client implements Account {
 
     private String login;
@@ -29,7 +33,17 @@ public class Client implements Account {
     }
 
     @Override
-    public void setChatHistory(ChatHistory chatHistory) {
+    public void setChatHistory(String chatHistory) {
         this.chatHistory = chatHistory;
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+
     }
 }

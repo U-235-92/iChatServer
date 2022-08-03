@@ -1,5 +1,7 @@
 package aq.koptev.models;
 
+import aq.koptev.models.account.Account;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -32,6 +34,15 @@ public class Server {
             Handler clientConnection = new Handler(this, clientSocket);
             clientConnection.processConnection();
         }
+    }
+
+    public boolean isHandlerConnected(Account account) {
+        for(Handler handler : handlers) {
+            if(handler.getAccount().getLogin().equals(account.getLogin())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public synchronized void addHandler(Handler connection) {

@@ -4,6 +4,8 @@ import java.sql.*;
 
 public class SQLiteConnector implements DBConnector {
 
+    public static String DEFAULT_DB_URL = "jdbc:sqlite:src/main/resources/db/chat-db.db";
+
     private Connection connection;
     private PreparedStatement preparedStatement;
 

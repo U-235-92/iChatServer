@@ -2,7 +2,9 @@ package aq.koptev.models.account;
 
 import aq.koptev.models.chat.ChatHistory;
 
-public interface Account {
+import java.io.Externalizable;
+
+public interface Account extends Externalizable {
 
     default String getLogin() throws UnsupportedOperationException {
         throw new UnsupportedOperationException();
@@ -20,7 +22,7 @@ public interface Account {
         throw new UnsupportedOperationException();
     }
 
-    default void setChatHistory(ChatHistory chatHistory) throws  UnsupportedOperationException {
+    default void setChatHistory(String chatHistory) throws UnsupportedOperationException {
         throw new UnsupportedOperationException();
     }
 }

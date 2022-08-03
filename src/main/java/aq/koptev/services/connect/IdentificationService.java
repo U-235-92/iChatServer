@@ -30,12 +30,18 @@ public class IdentificationService {
             String incomingLogin = account.getLogin();
             if(incomingLogin.startsWith(Command.REGISTRATION.getCommand())) {
                 account = registrationService.processRegistration(account);
+                sendAccount(account);
             } else if(incomingLogin.startsWith(Command.AUTHENTICATION.getCommand())) {
-                account = authenticationService.processAuthentication(account);
-                if(account != null) {
+                account = authenticationService.processAuthentication(handler, account);
+                if(account.getDescription() == null) {
                     isSuccessIdentification = true;
                 }
+                sendAccount(account);
             }
         }
+    }
+
+    private void sendAccount(Account account) throws IOException {
+        objectOutputStream.writeObject(account);
     }
 }

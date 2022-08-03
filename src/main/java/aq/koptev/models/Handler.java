@@ -1,5 +1,6 @@
 package aq.koptev.models;
 
+import aq.koptev.models.account.Account;
 import aq.koptev.models.chat.Message;
 import aq.koptev.services.connect.IdentificationService;
 import aq.koptev.services.disconnect.DisconnectionService;
@@ -21,6 +22,8 @@ public class Handler {
     private Socket clientSocket;
     private Server server;
 
+    private Account account;
+
     public Handler(Server server, Socket clientSocket) throws IOException {
         this.server = server;
         this.clientSocket = clientSocket;
@@ -36,7 +39,7 @@ public class Handler {
             try {
                 identificationService.processIdentification();
                 messageService.processMessage();
-            } catch (IOException e) {
+            } catch (IOException | ClassNotFoundException e) {
                 disconnectionService.processDisconnection();
                 e.printStackTrace();
             }
@@ -44,11 +47,19 @@ public class Handler {
         connectionThread.start();
     }
 
-    public void send(Message message) throws IOException {
+    public void sendMessage(Message message) throws IOException {
         objectOutputStream.writeObject(message);
+    }
+
+    public boolean isClientConnected(Account account) {
+        return server.isHandlerConnected(account);
     }
 
     public void registerClientConnection() {
         server.addHandler(this);
+    }
+
+    public Account getAccount() {
+        return account;
     }
 }
