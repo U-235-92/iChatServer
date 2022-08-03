@@ -35,6 +35,8 @@ public class IdentificationService {
                 account = authenticationService.processAuthentication(handler, account);
                 if(account.getDescription() == null) {
                     isSuccessIdentification = true;
+                    handler.setAccount(account);
+                    handler.registerClientConnection();
                 }
                 sendAccount(account);
             }
