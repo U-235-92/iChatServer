@@ -4,9 +4,13 @@ import aq.koptev.models.Handler;
 import aq.koptev.models.account.Account;
 import aq.koptev.models.account.Client;
 import aq.koptev.models.account.NullClient;
+import aq.koptev.models.chat.ChatHistory;
 import aq.koptev.services.db.DBConnector;
 import aq.koptev.services.db.SQLiteConnector;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -83,7 +87,16 @@ public class AuthenticationService {
             ResultSet rs = preparedStatement.executeQuery();
             String login = rs.getString(1);
             String password = rs.getString(2);
-            String chatHistory = rs.getString(3);
+//            ChatHistory chatHistory = (ChatHistory) rs.getObject(3);
+            ChatHistory chatHistory = null;
+            byte[] buf = rs.getBytes(3);
+            if(buf != null) {
+                try (ObjectInputStream objectInputStream = new ObjectInputStream(new ByteArrayInputStream(buf))) {
+                    chatHistory = (ChatHistory) objectInputStream.readObject();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
             client = new Client(login, password);
             client.setChatHistory(chatHistory);
         } catch (ClassNotFoundException | SQLException e) {

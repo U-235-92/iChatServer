@@ -12,6 +12,8 @@ public class Client implements Account {
     private String password;
     private ChatHistory chatHistory;
 
+    public Client() {}
+
     public Client(String login, String password) {
         this.login = login;
         this.password = password;
@@ -33,17 +35,21 @@ public class Client implements Account {
     }
 
     @Override
-    public void setChatHistory(String chatHistory) {
+    public void setChatHistory(ChatHistory chatHistory) {
         this.chatHistory = chatHistory;
     }
 
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
-
+        out.writeObject(login);
+        out.writeObject(password);
+        out.writeObject(chatHistory);
     }
 
     @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-
+        login = (String) in.readObject();
+        password = (String) in.readObject();
+        chatHistory = (ChatHistory) in.readObject();
     }
 }

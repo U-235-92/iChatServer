@@ -1,6 +1,7 @@
 package aq.koptev.models;
 
 import aq.koptev.models.account.Account;
+import aq.koptev.models.chat.Message;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -32,8 +33,55 @@ public class Server {
             clientSocket = serverSocket.accept();
             System.out.println("Connection is success!");
             Handler clientConnection = new Handler(this, clientSocket);
-            clientConnection.processConnection();
+            clientConnection.handle();
         }
+    }
+
+    public void processMessage(Message message) throws IOException {
+        if(isServerMessage(message)) {
+            processSendPublicMessage(message);
+        } else if(isPublicMessage(message)) {
+            processSendPublicMessage(message);
+        } else if(isPrivateMessage(message)) {
+            processSendPrivateMessage(message);
+        }
+    }
+
+    private boolean isServerMessage(Message message) {
+        return message.getSender() == null;
+    }
+
+    private boolean isPublicMessage(Message message) {
+        Account sender = message.getSender();
+        Account receiver = message.getReceiver();
+        return sender != null && receiver == null;
+    }
+
+    private boolean isPrivateMessage(Message message) {
+        Account sender = message.getSender();
+        Account receiver = message.getReceiver();
+        return sender != null && receiver != null;
+    }
+
+    private void processSendPublicMessage(Message message) throws IOException {
+        for(Handler handler : handlers) {
+            handler.sendMessage(message);
+        }
+    }
+
+    private void processSendPrivateMessage(Message message) throws IOException {
+        for(Handler handler : handlers) {
+            if(isMessageToSenderAndReceiver(handler, message)) {
+                handler.sendMessage(message);
+            }
+        }
+    }
+
+    private boolean isMessageToSenderAndReceiver(Handler handler, Message message) {
+        Account sender = message.getSender();
+        Account receiver = message.getReceiver();
+        return handler.getAccount().getLogin().equals(sender.getLogin()) ||
+                handler.getAccount().getLogin().equals(receiver.getLogin());
     }
 
     public boolean isHandlerConnected(Account account) {

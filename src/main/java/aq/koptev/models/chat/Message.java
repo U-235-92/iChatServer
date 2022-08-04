@@ -1,13 +1,21 @@
 package aq.koptev.models.chat;
 
+import aq.koptev.models.account.Account;
 import aq.koptev.models.account.Client;
 
-public class Message {
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
-    private Client sender;
-    private Client receiver;
+public class Message implements Externalizable {
+
+    private Account sender;
+    private Account receiver;
     private String date;
     private String text;
+
+    public Message() {}
 
     public Message(Client sender, Client receiver, String date, String text) {
         this.sender = sender;
@@ -16,11 +24,11 @@ public class Message {
         this.text = text;
     }
 
-    public Client getSender() {
+    public Account getSender() {
         return sender;
     }
 
-    public Client getReceiver() {
+    public Account getReceiver() {
         return receiver;
     }
 
@@ -30,5 +38,21 @@ public class Message {
 
     public String getText() {
         return text;
+    }
+
+    @Override
+    public void writeExternal(ObjectOutput out) throws IOException {
+        out.writeObject(sender);
+        out.writeObject(receiver);
+        out.writeObject(date);
+        out.writeObject(text);
+    }
+
+    @Override
+    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        sender = (Account) in.readObject();
+        receiver = (Account) in.readObject();
+        date = (String) in.readObject();
+        text = (String) in.readObject();
     }
 }

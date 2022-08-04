@@ -8,6 +8,8 @@ public class NullClient implements Account {
 
     private String description;
 
+    public NullClient() {}
+
     public NullClient(String description) {
         this.description = description;
     }
@@ -19,11 +21,11 @@ public class NullClient implements Account {
 
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
-
+        out.writeObject(description);
     }
 
     @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-
+        description = (String) in.readObject();
     }
 }

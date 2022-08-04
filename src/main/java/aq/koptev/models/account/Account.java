@@ -22,7 +22,7 @@ public interface Account extends Externalizable {
         throw new UnsupportedOperationException();
     }
 
-    default void setChatHistory(String chatHistory) throws UnsupportedOperationException {
+    default void setChatHistory(ChatHistory chatHistory) throws UnsupportedOperationException {
         throw new UnsupportedOperationException();
     }
 }

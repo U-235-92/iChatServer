@@ -22,6 +22,8 @@ public class IdentificationService {
         this.handler = handler;
         this.objectInputStream = objectInputStream;
         this.objectOutputStream = objectOutputStream;
+        authenticationService = new AuthenticationService();
+        registrationService = new RegistrationService();
     }
 
     public void processIdentification() throws IOException, ClassNotFoundException {
@@ -36,7 +38,7 @@ public class IdentificationService {
                 if(account.getDescription() == null) {
                     isSuccessIdentification = true;
                     handler.setAccount(account);
-                    handler.registerClientConnection();
+                    handler.registerHandler();
                 }
                 sendAccount(account);
             }
