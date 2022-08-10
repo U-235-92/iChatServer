@@ -66,6 +66,7 @@ public class Server {
     private void processSendPublicMessage(Message message) throws IOException {
         for(Handler handler : handlers) {
             handler.sendMessage(message);
+            handler.getMeta().addMessage(message);
         }
     }
 
@@ -73,6 +74,7 @@ public class Server {
         for(Handler handler : handlers) {
             if(isMessageToSenderAndReceiver(handler, message)) {
                 handler.sendMessage(message);
+                handler.getMeta().addMessage(message);
             }
         }
     }
