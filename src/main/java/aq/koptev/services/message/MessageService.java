@@ -1,7 +1,9 @@
 package aq.koptev.services.message;
 
-import aq.koptev.models.Server;
-import aq.koptev.models.chat.Message;
+import aq.koptev.models.connect.Server;
+import aq.koptev.models.network.NetObject;
+import aq.koptev.models.obj.Message;
+import aq.koptev.util.ParameterNetObject;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -18,7 +20,8 @@ public class MessageService {
 
     public void processMessage() throws IOException, ClassNotFoundException {
         while (true) {
-            Message message = (Message) objectInputStream.readObject();
+            NetObject netObject = (NetObject) objectInputStream.readObject();
+            Message message = NetObject.getObject(netObject.getData(ParameterNetObject.MESSAGE));
             server.processMessage(message);
         }
     }

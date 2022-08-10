@@ -1,10 +1,14 @@
-package aq.koptev.models;
+package aq.koptev.models.connect;
 
-import aq.koptev.models.account.Account;
-import aq.koptev.models.chat.Message;
+import aq.koptev.models.network.NetObject;
+import aq.koptev.models.obj.Client;
+import aq.koptev.models.obj.Message;
+import aq.koptev.models.obj.Meta;
 import aq.koptev.services.connect.IdentificationService;
 import aq.koptev.services.disconnect.DisconnectionService;
 import aq.koptev.services.message.MessageService;
+import aq.koptev.util.ParameterNetObject;
+import aq.koptev.util.TypeNetObject;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -12,7 +16,6 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 public class Handler {
-
     private IdentificationService identificationService;
     private DisconnectionService disconnectionService;
     private MessageService messageService;
@@ -20,15 +23,14 @@ public class Handler {
     private ObjectInputStream objectInputStream;
     private Socket clientSocket;
     private Server server;
-
-    private Account account;
+    private Meta meta;
 
     public Handler(Server server, Socket clientSocket) throws IOException {
         this.server = server;
         this.clientSocket = clientSocket;
         objectOutputStream = new ObjectOutputStream(clientSocket.getOutputStream());
         objectInputStream = new ObjectInputStream(clientSocket.getInputStream());
-        identificationService = new IdentificationService(this, objectInputStream, objectOutputStream);
+        identificationService = new IdentificationService(server, this, objectInputStream, objectOutputStream);
         disconnectionService = new DisconnectionService(server, this);
         messageService = new MessageService(server, objectInputStream);
     }
@@ -52,23 +54,24 @@ public class Handler {
     }
 
     public void sendMessage(Message message) throws IOException {
-        account.getChatHistory().addMessage(message);
-        objectOutputStream.writeObject(message);
+        NetObject netObject = new NetObject(TypeNetObject.MESSAGE);
+        netObject.putData(ParameterNetObject.MESSAGE, NetObject.getBytes(message));
+        objectOutputStream.writeObject(netObject);
     }
 
-    public boolean isClientConnected(Account account) {
-        return server.isHandlerConnected(account);
+    public boolean isClientConnected(Client client) {
+        return server.isHandlerConnected(client);
     }
 
     public void registerHandler() {
         server.addHandler(this);
     }
 
-    public Account getAccount() {
-        return account;
+    public Meta getMeta() {
+        return meta;
     }
 
-    public void setAccount(Account account) {
-        this.account = account;
+    public void setMeta(Meta meta) {
+        this.meta = meta;
     }
 }

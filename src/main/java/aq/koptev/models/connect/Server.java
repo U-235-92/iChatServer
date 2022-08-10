@@ -1,7 +1,7 @@
-package aq.koptev.models;
+package aq.koptev.models.connect;
 
-import aq.koptev.models.account.Account;
-import aq.koptev.models.chat.Message;
+import aq.koptev.models.obj.Client;
+import aq.koptev.models.obj.Message;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -52,14 +52,14 @@ public class Server {
     }
 
     private boolean isPublicMessage(Message message) {
-        Account sender = message.getSender();
-        Account receiver = message.getReceiver();
+        String sender = message.getSender();
+        String receiver = message.getReceiver();
         return sender != null && receiver == null;
     }
 
     private boolean isPrivateMessage(Message message) {
-        Account sender = message.getSender();
-        Account receiver = message.getReceiver();
+        String sender = message.getSender();
+        String receiver = message.getReceiver();
         return sender != null && receiver != null;
     }
 
@@ -78,19 +78,27 @@ public class Server {
     }
 
     private boolean isMessageToSenderAndReceiver(Handler handler, Message message) {
-        Account sender = message.getSender();
-        Account receiver = message.getReceiver();
-        return handler.getAccount().getLogin().equals(sender.getLogin()) ||
-                handler.getAccount().getLogin().equals(receiver.getLogin());
+        String sender = message.getSender();
+        String receiver = message.getReceiver();
+        return handler.getMeta().getClient().getLogin().equals(sender) ||
+                handler.getMeta().getClient().getLogin().equals(receiver);
     }
 
-    public boolean isHandlerConnected(Account account) {
+    public boolean isHandlerConnected(Client client) {
         for(Handler handler : handlers) {
-            if(handler.getAccount().getLogin().equals(account.getLogin())) {
+            if(handler.getMeta().getClient().getLogin().equals(client.getLogin())) {
                 return true;
             }
         }
         return false;
+    }
+
+    public List<Client> getConnectedClients() {
+        List<Client> clients = new ArrayList<>();
+        for(Handler handler : handlers) {
+            clients.add(handler.getMeta().getClient());
+        }
+        return clients;
     }
 
     public synchronized void addHandler(Handler connection) {

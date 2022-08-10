@@ -1,9 +1,9 @@
 package aq.koptev.services.disconnect;
 
-import aq.koptev.models.Handler;
-import aq.koptev.models.Server;
-import aq.koptev.models.account.Account;
-import aq.koptev.models.chat.Message;
+import aq.koptev.models.connect.Handler;
+import aq.koptev.models.connect.Server;
+import aq.koptev.models.obj.Client;
+import aq.koptev.models.obj.Message;
 import aq.koptev.services.db.DBConnector;
 import aq.koptev.services.db.SQLiteConnector;
 
@@ -18,13 +18,11 @@ public class DisconnectionService {
 
     private Server server;
     private Handler handler;
-    private Account account;
     private DBConnector connector;
 
     public DisconnectionService(Server server, Handler handler) {
         this.server = server;
         this.handler = handler;
-        this.account = handler.getAccount();
         connector = new SQLiteConnector();
     }
 
@@ -37,18 +35,28 @@ public class DisconnectionService {
     private void writeChatHistory() {
         String sql = "UPDATE Chats SET chatHistory = ? WHERE userId = (SELECT userId FROM Users WHERE login = ?)";
         try(Connection connection = connector.getConnection(SQLiteConnector.DEFAULT_DB_URL);
-            PreparedStatement preparedStatement = connector.getPreparedStatement(connection, sql)) {
-            preparedStatement.setObject(1, account.getChatHistory());
-            preparedStatement.setString(2, account.getLogin());
+                PreparedStatement preparedStatement = connector.getPreparedStatement(connection, sql);
+                ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream)) {
+            Client client = handler.getMeta().getClient();
+            objectOutputStream.writeObject(handler.getMeta().getMessages());
+            byte[] bytes = byteArrayOutputStream.toByteArray();
+            preparedStatement.setBytes(1, bytes);
+            preparedStatement.setString(2, client.getLogin());
             preparedStatement.executeUpdate();
-        } catch (ClassNotFoundException | SQLException e) {
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
     }
 
     private void sendDisconnectionMessage() {
-        String text = String.format("Пользователь %s покинул чат", account.getLogin());
-        Message message = new Message(null, null, null, text);
+        String login = handler.getMeta().getClient().getLogin();
+        String text = String.format("Пользователь %s покинул чат", login);
+        Message message = new Message(text);
         try {
             server.processMessage(message);
         } catch (IOException e) {

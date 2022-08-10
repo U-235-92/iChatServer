@@ -1,53 +1,71 @@
 package aq.koptev.services.connect.authentication;
 
-import aq.koptev.models.Handler;
-import aq.koptev.models.account.Account;
-import aq.koptev.models.account.Client;
-import aq.koptev.models.account.NullClient;
-import aq.koptev.models.chat.ChatHistory;
+import aq.koptev.models.connect.Handler;
+import aq.koptev.models.connect.Server;
+import aq.koptev.models.network.NetObject;
+import aq.koptev.models.obj.Client;
+import aq.koptev.models.obj.Message;
+import aq.koptev.models.obj.Meta;
 import aq.koptev.services.db.DBConnector;
 import aq.koptev.services.db.SQLiteConnector;
+import aq.koptev.util.ParameterNetObject;
+import aq.koptev.util.TypeNetObject;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class AuthenticationService {
 
     private DBConnector connector;
+    private ObjectOutputStream objectOutputStream;
+    private Handler handler;
+    private Server server;
 
-    public AuthenticationService() {
+    public AuthenticationService(Server server, Handler handler, ObjectOutputStream objectOutputStream) {
+        this.server = server;
+        this.handler = handler;
+        this.objectOutputStream = objectOutputStream;
         connector = new SQLiteConnector();
     }
 
-    public Account processAuthentication(Handler handler, Account account) {
-        if(isExistAccount(account)) {
-            if(isAuthorizeAccount(handler, account)) {
-                String description = String.format("Пользователь с логином %s уже авторизован", account.getLogin());
-                return new NullClient(description);
+    public boolean processAuthentication(Client client) {
+        boolean isSuccessAuthentication = false;
+        if(isExistAccount(client)) {
+            if(isAuthorizeAccount(handler, client)) {
+                String text = String.format("Пользователь с логином %s уже авторизован", client.getLogin());
+                sendErrorMessage(text);
             } else {
-                if(isCorrectPassword(account)) {
-                    return getClientAccount(account);
+                if(isCorrectPassword(client)) {
+                    handler.registerHandler();
+                    Meta meta = getMetaByClient(client);
+                    handler.setMeta(meta);
+                    sendMeta(meta);
+                    isSuccessAuthentication = true;
                 } else {
-                    String description = "Введен неверный пароль";
-                    return new NullClient(description);
+                    String text = "Введен неверный пароль";
+                    sendErrorMessage(text);
                 }
             }
         } else {
-            String description = String.format("Пользователя с логином %s не существует", account.getLogin());
-            return new NullClient(description);
+            String text = String.format("Пользователя с логином %s не существует", client.getLogin());
+            sendErrorMessage(text);
         }
+        return isSuccessAuthentication;
     }
 
-    private boolean isExistAccount(Account account) {
+    private boolean isExistAccount(Client client) {
         String sql = "SELECT login FROM Users WHERE login = ?";
         try(Connection connection = connector.getConnection(SQLiteConnector.DEFAULT_DB_URL);
             PreparedStatement preparedStatement = connector.getPreparedStatement(connection, sql)) {
-            preparedStatement.setString(1, account.getLogin());
+            preparedStatement.setString(1, client.getLogin());
             ResultSet rs = preparedStatement.executeQuery();
             if(rs.next()) {
                 return true;
@@ -58,18 +76,18 @@ public class AuthenticationService {
         return false;
     }
 
-    private boolean isAuthorizeAccount(Handler handler, Account account) {
-        return handler.isClientConnected(account);
+    private boolean isAuthorizeAccount(Handler handler, Client client) {
+        return handler.isClientConnected(client);
     }
 
-    private boolean isCorrectPassword(Account account) {
+    private boolean isCorrectPassword(Client client) {
         String sql = "SELECT password FROM Users WHERE login = ?";
         try(Connection connection = connector.getConnection(SQLiteConnector.DEFAULT_DB_URL);
             PreparedStatement preparedStatement = connector.getPreparedStatement(connection, sql)) {
-            preparedStatement.setString(1, account.getLogin());
+            preparedStatement.setString(1, client.getLogin());
             ResultSet rs = preparedStatement.executeQuery();
             String password = rs.getString(1);
-            if(account.getPassword().equals(password)) {
+            if(client.getPassword().equals(password)) {
                 return true;
             }
         } catch (ClassNotFoundException | SQLException e) {
@@ -78,30 +96,60 @@ public class AuthenticationService {
         return false;
     }
 
-    private Account getClientAccount(Account account) {
-        String sql = "SELECT Users.login, Users.password, Chats.chatHistory FROM Users INNER JOIN Chats ON Users.userID = Chats.userId WHERE login = ?";
-        Account client = null;
+    private void sendErrorMessage(String text) {
+        Message message = new Message(text);
+        NetObject netObject = new NetObject(TypeNetObject.MESSAGE);
+        netObject.putData(ParameterNetObject.MESSAGE, NetObject.getBytes(message));
+        sendNetObject(netObject);
+    }
+
+    private Meta getMetaByClient(Client client) {
+        Meta meta = new Meta();
+        List<Message> messages = getMessages(client);
+        List<Client> clients = server.getConnectedClients();
+        meta.setClient(client);
+        meta.addClients(clients);
+        meta.addMessages(messages);
+        return meta;
+    }
+
+    private List<Message> getMessages(Client client) {
+        List<Message> messages = null;
+        String sql = "SELECT chatHistory FROM Chats WHERE userId = (SELECT userID FROM Users WHERE login = ?))";
         try(Connection connection = connector.getConnection(SQLiteConnector.DEFAULT_DB_URL);
             PreparedStatement preparedStatement = connector.getPreparedStatement(connection, sql)) {
-            preparedStatement.setString(1, account.getLogin());
+            preparedStatement.setString(1, client.getLogin());
             ResultSet rs = preparedStatement.executeQuery();
-            String login = rs.getString(1);
-            String password = rs.getString(2);
-//            ChatHistory chatHistory = (ChatHistory) rs.getObject(3);
-            ChatHistory chatHistory = null;
-            byte[] buf = rs.getBytes(3);
+            byte[] buf = rs.getBytes(1);
             if(buf != null) {
                 try (ObjectInputStream objectInputStream = new ObjectInputStream(new ByteArrayInputStream(buf))) {
-                    chatHistory = (ChatHistory) objectInputStream.readObject();
+                    messages = (List<Message>) objectInputStream.readObject();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
-            client = new Client(login, password);
-            client.setChatHistory(chatHistory);
-        } catch (ClassNotFoundException | SQLException e) {
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
-        return client;
+        return messages;
+    }
+
+    private void sendMeta(Meta meta) {
+        String text = String.format("Пользователь %s подключился к чату", meta.getClient().getLogin());
+        Message message = new Message(text);
+        NetObject netObject = new NetObject(TypeNetObject.SUCCESS_AUTHENTICATION);
+        netObject.putData(ParameterNetObject.META, NetObject.getBytes(meta));
+        netObject.putData(ParameterNetObject.MESSAGE, NetObject.getBytes(message));
+        sendNetObject(netObject);
+    }
+
+    private void sendNetObject(NetObject netObject) {
+        try {
+            objectOutputStream.writeObject(netObject);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
