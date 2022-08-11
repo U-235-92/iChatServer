@@ -2,7 +2,7 @@ package aq.koptev.services.connect;
 
 import aq.koptev.models.connect.Handler;
 import aq.koptev.models.connect.Server;
-import aq.koptev.models.network.NetObject;
+import aq.koptev.models.connect.NetObject;
 import aq.koptev.models.obj.Client;
 import aq.koptev.services.connect.authentication.AuthenticationService;
 import aq.koptev.services.connect.registration.RegistrationService;

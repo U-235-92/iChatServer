@@ -1,7 +1,7 @@
 package aq.koptev.services.message;
 
 import aq.koptev.models.connect.Server;
-import aq.koptev.models.network.NetObject;
+import aq.koptev.models.connect.NetObject;
 import aq.koptev.models.obj.Message;
 import aq.koptev.util.ParameterNetObject;
 

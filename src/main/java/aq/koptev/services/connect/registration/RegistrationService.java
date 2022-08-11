@@ -1,6 +1,6 @@
 package aq.koptev.services.connect.registration;
 
-import aq.koptev.models.network.NetObject;
+import aq.koptev.models.connect.NetObject;
 import aq.koptev.models.obj.Client;
 import aq.koptev.models.obj.Message;
 import aq.koptev.services.db.DBConnector;

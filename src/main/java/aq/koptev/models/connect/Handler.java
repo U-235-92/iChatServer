@@ -1,9 +1,9 @@
 package aq.koptev.models.connect;
 
-import aq.koptev.models.network.NetObject;
+import aq.koptev.models.obj.ChatHistory;
 import aq.koptev.models.obj.Client;
+import aq.koptev.models.obj.ClientPool;
 import aq.koptev.models.obj.Message;
-import aq.koptev.models.obj.Meta;
 import aq.koptev.services.connect.IdentificationService;
 import aq.koptev.services.disconnect.DisconnectionService;
 import aq.koptev.services.message.MessageService;
@@ -23,7 +23,9 @@ public class Handler {
     private ObjectInputStream objectInputStream;
     private Socket clientSocket;
     private Server server;
-    private Meta meta;
+    private Client client;
+    private ClientPool clientPool;
+    private ChatHistory chatHistory;
 
     public Handler(Server server, Socket clientSocket) throws IOException {
         this.server = server;
@@ -63,15 +65,32 @@ public class Handler {
         return server.isHandlerConnected(client);
     }
 
-    public void registerHandler() {
+    public void registerHandler(Client client) {
         server.addHandler(this);
+        this.client = client;
     }
 
-    public Meta getMeta() {
-        return meta;
+    public Client getClient() {
+        return client;
     }
 
-    public void setMeta(Meta meta) {
-        this.meta = meta;
+    public ClientPool getClientPool() {
+        return clientPool;
+    }
+
+    public ChatHistory getChatHistory() {
+        return chatHistory;
+    }
+
+    public void setClient(Client client) {
+        this.client = client;
+    }
+
+    public void setClientPool(ClientPool clientPool) {
+        this.clientPool = clientPool;
+    }
+
+    public void setChatHistory(ChatHistory chatHistory) {
+        this.chatHistory = chatHistory;
     }
 }

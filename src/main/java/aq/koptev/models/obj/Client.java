@@ -3,6 +3,7 @@ package aq.koptev.models.obj;
 import java.io.Serializable;
 
 public class Client implements Serializable {
+
     private String login;
     private String password;
 

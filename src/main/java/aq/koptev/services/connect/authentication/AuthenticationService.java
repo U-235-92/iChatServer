@@ -2,10 +2,11 @@ package aq.koptev.services.connect.authentication;
 
 import aq.koptev.models.connect.Handler;
 import aq.koptev.models.connect.Server;
-import aq.koptev.models.network.NetObject;
+import aq.koptev.models.connect.NetObject;
+import aq.koptev.models.obj.ChatHistory;
 import aq.koptev.models.obj.Client;
+import aq.koptev.models.obj.ClientPool;
 import aq.koptev.models.obj.Message;
-import aq.koptev.models.obj.Meta;
 import aq.koptev.services.db.DBConnector;
 import aq.koptev.services.db.SQLiteConnector;
 import aq.koptev.util.ParameterNetObject;
@@ -19,7 +20,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
 public class AuthenticationService {
@@ -44,10 +44,12 @@ public class AuthenticationService {
                 sendErrorMessage(text);
             } else {
                 if(isCorrectPassword(client)) {
-                    handler.registerHandler();
-                    Meta meta = getMetaByClient(client);
-                    handler.setMeta(meta);
-                    sendMeta(meta);
+                    handler.registerHandler(client);
+                    ChatHistory chatHistory = getChatHistory(client);
+                    ClientPool clientPool = getClientPool();
+                    handler.setChatHistory(chatHistory);
+                    handler.setClientPool(clientPool);
+                    sendSuccessAuthenticationData(client, chatHistory, clientPool);
                     isSuccessAuthentication = true;
                 } else {
                     String text = "Введен неверный пароль";
@@ -96,24 +98,7 @@ public class AuthenticationService {
         return false;
     }
 
-    private void sendErrorMessage(String text) {
-        Message message = new Message(text);
-        NetObject netObject = new NetObject(TypeNetObject.MESSAGE);
-        netObject.putData(ParameterNetObject.MESSAGE, NetObject.getBytes(message));
-        sendNetObject(netObject);
-    }
-
-    private Meta getMetaByClient(Client client) {
-        Meta meta = new Meta();
-        List<Message> messages = getMessages(client);
-        List<Client> clients = server.getConnectedClients();
-        meta.setClient(client);
-        meta.addClients(clients);
-        meta.addMessages(messages);
-        return meta;
-    }
-
-    private List<Message> getMessages(Client client) {
+    private ChatHistory getChatHistory(Client client) {
         List<Message> messages = null;
         String sql = "SELECT chatHistory FROM Chats WHERE userId = (SELECT userID FROM Users WHERE login = ?))";
         try(Connection connection = connector.getConnection(SQLiteConnector.DEFAULT_DB_URL);
@@ -133,14 +118,29 @@ public class AuthenticationService {
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
-        return messages;
+        ChatHistory chatHistory = new ChatHistory();
+        chatHistory.addAll(messages);
+        return chatHistory;
     }
 
-    private void sendMeta(Meta meta) {
-        String text = String.format("Пользователь %s подключился к чату", meta.getClient().getLogin());
-        Message message = new Message(text);
+    private ClientPool getClientPool() {
+        ClientPool clientPool = new ClientPool();
+        clientPool.addAll(server.getConnectedClients());
+        return clientPool;
+    }
+
+    private void sendSuccessAuthenticationData(Client client, ChatHistory chatHistory, ClientPool clientPool) {
         NetObject netObject = new NetObject(TypeNetObject.SUCCESS_AUTHENTICATION);
-        netObject.putData(ParameterNetObject.META, NetObject.getBytes(meta));
+        netObject.putData(ParameterNetObject.CHAT_HISTORY, NetObject.getBytes(chatHistory));
+        netObject.putData(ParameterNetObject.CLIENT, NetObject.getBytes(client));
+        netObject.putData(ParameterNetObject.CLIENT_POOL, NetObject.getBytes(clientPool));
+        sendNetObject(netObject);
+    }
+
+
+    private void sendErrorMessage(String text) {
+        Message message = new Message(text);
+        NetObject netObject = new NetObject(TypeNetObject.MESSAGE);
         netObject.putData(ParameterNetObject.MESSAGE, NetObject.getBytes(message));
         sendNetObject(netObject);
     }

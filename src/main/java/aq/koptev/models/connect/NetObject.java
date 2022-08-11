@@ -1,4 +1,4 @@
-package aq.koptev.models.network;
+package aq.koptev.models.connect;
 
 import aq.koptev.util.ParameterNetObject;
 import aq.koptev.util.TypeNetObject;
@@ -19,7 +19,9 @@ public class NetObject implements Serializable {
 
     public void putData(ParameterNetObject param, byte[] data) {
         Byte[] bytes = new Byte[data.length];
-        System.arraycopy(data, 0, bytes, 0, data.length);
+        for(int i = 0; i < data.length; i++) {
+            bytes[i] = data[i];
+        }
         dataMap.put(param, bytes);
     }
 
@@ -30,7 +32,9 @@ public class NetObject implements Serializable {
     public byte[] getData(ParameterNetObject param) {
         Byte[] bytes = dataMap.get(param);
         byte[] bytes2 = new byte[bytes.length];
-        System.arraycopy(bytes, 0, bytes2, 0, bytes.length);
+        for(int i = 0; i < bytes.length; i++) {
+            bytes2[i] = bytes[i];
+        }
         return bytes2;
     }
 
@@ -40,7 +44,7 @@ public class NetObject implements Serializable {
 
     public static <T> byte[] getBytes(T obj) {
         try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream)) {
+             ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream)) {
             objectOutputStream.writeObject(obj);
             return byteArrayOutputStream.toByteArray();
         } catch (IOException e) {
@@ -51,7 +55,7 @@ public class NetObject implements Serializable {
 
     public static <T> T getObject(byte[] bytes) {
         try(ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(bytes);
-                ObjectInputStream objectInputStream = new ObjectInputStream(byteArrayInputStream)) {
+            ObjectInputStream objectInputStream = new ObjectInputStream(byteArrayInputStream)) {
             return (T) objectInputStream.readObject();
         } catch (IOException e) {
             e.printStackTrace();

@@ -66,7 +66,7 @@ public class Server {
     private void processSendPublicMessage(Message message) throws IOException {
         for(Handler handler : handlers) {
             handler.sendMessage(message);
-            handler.getMeta().addMessage(message);
+            handler.getChatHistory().add(message);
         }
     }
 
@@ -74,7 +74,7 @@ public class Server {
         for(Handler handler : handlers) {
             if(isMessageToSenderAndReceiver(handler, message)) {
                 handler.sendMessage(message);
-                handler.getMeta().addMessage(message);
+                handler.getChatHistory().add(message);
             }
         }
     }
@@ -82,13 +82,13 @@ public class Server {
     private boolean isMessageToSenderAndReceiver(Handler handler, Message message) {
         String sender = message.getSender();
         String receiver = message.getReceiver();
-        return handler.getMeta().getClient().getLogin().equals(sender) ||
-                handler.getMeta().getClient().getLogin().equals(receiver);
+        return handler.getClient().getLogin().equals(sender) ||
+                handler.getClient().getLogin().equals(receiver);
     }
 
     public boolean isHandlerConnected(Client client) {
         for(Handler handler : handlers) {
-            if(handler.getMeta().getClient().getLogin().equals(client.getLogin())) {
+            if(handler.getClient().getLogin().equals(client.getLogin())) {
                 return true;
             }
         }
@@ -98,7 +98,7 @@ public class Server {
     public List<Client> getConnectedClients() {
         List<Client> clients = new ArrayList<>();
         for(Handler handler : handlers) {
-            clients.add(handler.getMeta().getClient());
+            clients.add(handler.getClient());
         }
         return clients;
     }

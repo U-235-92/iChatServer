@@ -38,8 +38,8 @@ public class DisconnectionService {
                 PreparedStatement preparedStatement = connector.getPreparedStatement(connection, sql);
                 ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
                 ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream)) {
-            Client client = handler.getMeta().getClient();
-            objectOutputStream.writeObject(handler.getMeta().getMessages());
+            Client client = handler.getClient();
+            objectOutputStream.writeObject(handler.getChatHistory().getMessages());
             byte[] bytes = byteArrayOutputStream.toByteArray();
             preparedStatement.setBytes(1, bytes);
             preparedStatement.setString(2, client.getLogin());
@@ -54,7 +54,7 @@ public class DisconnectionService {
     }
 
     private void sendDisconnectionMessage() {
-        String login = handler.getMeta().getClient().getLogin();
+        String login = handler.getClient().getLogin();
         String text = String.format("Пользователь %s покинул чат", login);
         Message message = new Message(text);
         try {
