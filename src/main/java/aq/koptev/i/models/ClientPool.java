@@ -17,7 +17,7 @@ public class ClientPool implements Serializable {
     }
 
     public void addAll(List<Client> clients) {
-        clients.addAll(clients);
+        this.clients.addAll(clients);
     }
 
     public void update(ClientPool clientPool) {

@@ -51,9 +51,7 @@ public class Handler {
         server.removeHandler(this);
     }
 
-    public void sendMessage(Message message) throws IOException {
-        NetObject netObject = new NetObject(TypeNetObject.MESSAGE);
-        netObject.putData(ParameterNetObject.MESSAGE, NetObject.getBytes(message));
+    public void sendNetObject(NetObject netObject) throws IOException {
         objectOutputStream.writeObject(netObject);
     }
 

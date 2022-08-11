@@ -1,5 +1,8 @@
 package aq.koptev.i.models;
 
+import aq.koptev.i.util.ParameterNetObject;
+import aq.koptev.i.util.TypeNetObject;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -34,7 +37,24 @@ public class Server {
         }
     }
 
-    public void processMessage(Message message) throws IOException {
+    public void processSendNetObject(NetObject netObject) throws IOException {
+        switch (netObject.getType()) {
+            case MESSAGE:
+                Message message = NetObject.getObject(netObject.getData(ParameterNetObject.MESSAGE));
+                processMessage(message);
+                break;
+            case DISCONNECTION_NOTIFY:
+                processDisconnectionNotify(netObject);
+                break;
+            default:
+                for(Handler handler : handlers) {
+                    handler.sendNetObject(netObject);
+                }
+                break;
+        }
+    }
+
+    private void processMessage(Message message) throws IOException {
         if(isServerMessage(message)) {
             processSendPublicMessage(message);
         } else if(isPublicMessage(message)) {
@@ -62,16 +82,14 @@ public class Server {
 
     private void processSendPublicMessage(Message message) throws IOException {
         for(Handler handler : handlers) {
-            handler.sendMessage(message);
-            handler.getChatHistory().add(message);
+            sendMessage(handler, message);
         }
     }
 
     private void processSendPrivateMessage(Message message) throws IOException {
         for(Handler handler : handlers) {
             if(isMessageToSenderAndReceiver(handler, message)) {
-                handler.sendMessage(message);
-                handler.getChatHistory().add(message);
+                sendMessage(handler, message);
             }
         }
     }
@@ -81,6 +99,21 @@ public class Server {
         String receiver = message.getReceiver();
         return handler.getClient().getLogin().equals(sender) ||
                 handler.getClient().getLogin().equals(receiver);
+    }
+
+    private void sendMessage(Handler handler, Message message) throws IOException {
+        NetObject netObject = new NetObject(TypeNetObject.MESSAGE);
+        netObject.putData(ParameterNetObject.MESSAGE, NetObject.getBytes(message));
+        handler.sendNetObject(netObject);
+        handler.getChatHistory().add(message);
+    }
+
+    private void processDisconnectionNotify(NetObject netObject) throws IOException {
+        for(Handler handler : handlers) {
+            Message message = NetObject.getObject(netObject.getData(ParameterNetObject.MESSAGE));
+            handler.getChatHistory().add(message);
+            handler.sendNetObject(netObject);
+        }
     }
 
     public boolean isHandlerConnected(Client client) {
@@ -95,6 +128,17 @@ public class Server {
     public List<Client> getConnectedClients() {
         List<Client> clients = new ArrayList<>();
         for(Handler handler : handlers) {
+            clients.add(handler.getClient());
+        }
+        return clients;
+    }
+
+    public List<Client> getConnectedClientsWithoutClient(Client client) {
+        List<Client> clients = new ArrayList<>();
+        for(Handler handler : handlers) {
+            if(client.getLogin().equals(handler.getClient().getLogin())) {
+                continue;
+            }
             clients.add(handler.getClient());
         }
         return clients;

@@ -3,6 +3,8 @@ package aq.koptev.i.services.disconnect;
 import aq.koptev.i.models.*;
 import aq.koptev.i.services.db.DBConnector;
 import aq.koptev.i.services.db.SQLiteConnector;
+import aq.koptev.i.util.ParameterNetObject;
+import aq.koptev.i.util.TypeNetObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -11,7 +13,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.List;
 
 public class DisconnectionService {
 
@@ -32,7 +33,6 @@ public class DisconnectionService {
             updateChatHistory();
         }
         sendDisconnectionMessage();
-        closeConnection();
     }
 
     private boolean isDbChatHistoryEmpty() {
@@ -101,8 +101,14 @@ public class DisconnectionService {
         String login = handler.getClient().getLogin();
         String text = String.format("Пользователь %s покинул чат", login);
         Message message = new Message(text);
+        ClientPool clientPool = new ClientPool();
+        clientPool.addAll(server.getConnectedClientsWithoutClient(handler.getClient()));
         try {
-            server.processMessage(message);
+            NetObject netObject = new NetObject(TypeNetObject.DISCONNECTION_NOTIFY);
+            netObject.putData(ParameterNetObject.MESSAGE, NetObject.getBytes(message));
+            netObject.putData(ParameterNetObject.CLIENT_POOL, NetObject.getBytes(clientPool));
+            closeConnection();
+            server.processSendNetObject(netObject);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -111,6 +117,7 @@ public class DisconnectionService {
     private void closeConnection() {
         try {
             handler.closeConnection();
+            server.removeHandler(handler);
         } catch (IOException e) {
             e.printStackTrace();
         }

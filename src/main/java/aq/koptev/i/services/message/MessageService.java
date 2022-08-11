@@ -21,8 +21,7 @@ public class MessageService {
     public void processMessage() throws IOException, ClassNotFoundException {
         while (true) {
             NetObject netObject = (NetObject) objectInputStream.readObject();
-            Message message = NetObject.getObject(netObject.getData(ParameterNetObject.MESSAGE));
-            server.processMessage(message);
+            server.processSendNetObject(netObject);
         }
     }
 }

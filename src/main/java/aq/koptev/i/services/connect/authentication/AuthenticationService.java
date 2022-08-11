@@ -125,7 +125,8 @@ public class AuthenticationService {
 
     private ClientPool getClientPool() {
         ClientPool clientPool = new ClientPool();
-        clientPool.addAll(server.getConnectedClients());
+        List<Client> clients = server.getConnectedClients();
+        clientPool.addAll(clients);
         return clientPool;
     }
 
@@ -136,7 +137,11 @@ public class AuthenticationService {
         netObject.putData(ParameterNetObject.CLIENT_POOL, NetObject.getBytes(clientPool));
         Message message = new Message(String.format("Пользователь %s подключился к чату!", client.getLogin()));
         netObject.putData(ParameterNetObject.MESSAGE, NetObject.getBytes(message));
-        sendNetObject(netObject);
+        try {
+            server.processSendNetObject(netObject);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 
