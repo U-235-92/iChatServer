@@ -99,7 +99,7 @@ public class AuthenticationService {
     }
 
     private ChatHistory getChatHistory(Client client) {
-        List<Message> messages = null;
+        ChatHistory chatHistory = new ChatHistory();
         String sql = "SELECT chatHistory FROM Chats WHERE userId = (SELECT userID FROM Users WHERE login = ?)";
         try(Connection connection = connector.getConnection(SQLiteConnector.DEFAULT_DB_URL);
             PreparedStatement preparedStatement = connector.getPreparedStatement(connection, sql)) {
@@ -109,7 +109,7 @@ public class AuthenticationService {
                 byte[] buf = rs.getBytes(1);
                 if(buf != null) {
                     try (ObjectInputStream objectInputStream = new ObjectInputStream(new ByteArrayInputStream(buf))) {
-                        messages = (List<Message>) objectInputStream.readObject();
+                        chatHistory = (ChatHistory) objectInputStream.readObject();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -119,10 +119,6 @@ public class AuthenticationService {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
-        }
-        ChatHistory chatHistory = new ChatHistory();
-        if(messages != null) {
-            chatHistory.addAll(messages);
         }
         return chatHistory;
     }

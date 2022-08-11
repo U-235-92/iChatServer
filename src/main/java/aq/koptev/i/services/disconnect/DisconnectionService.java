@@ -1,9 +1,6 @@
 package aq.koptev.i.services.disconnect;
 
-import aq.koptev.i.models.Handler;
-import aq.koptev.i.models.Server;
-import aq.koptev.i.models.Client;
-import aq.koptev.i.models.Message;
+import aq.koptev.i.models.*;
 import aq.koptev.i.services.db.DBConnector;
 import aq.koptev.i.services.db.SQLiteConnector;
 
@@ -63,8 +60,8 @@ public class DisconnectionService {
                 ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
                 ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream)) {
             Client client = handler.getClient();
-            List<Message> messages = handler.getChatHistory().getMessages();
-            objectOutputStream.writeObject(messages);
+            ChatHistory chatHistory = handler.getChatHistory();
+            objectOutputStream.writeObject(chatHistory);
             byte[] bytes = byteArrayOutputStream.toByteArray();
             preparedStatement.setString(1, client.getLogin());
             preparedStatement.setBytes(2, bytes);
@@ -81,12 +78,12 @@ public class DisconnectionService {
     private void updateChatHistory() {
         String sql = "UPDATE Chats SET chatHistory = ? WHERE userId = (SELECT userId FROM Users WHERE login = ?)";
         try(Connection connection = connector.getConnection(SQLiteConnector.DEFAULT_DB_URL);
-            PreparedStatement preparedStatement = connector.getPreparedStatement(connection, sql);
-            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream)) {
+                PreparedStatement preparedStatement = connector.getPreparedStatement(connection, sql);
+                ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream)) {
             Client client = handler.getClient();
-            List<Message> messages = handler.getChatHistory().getMessages();
-            objectOutputStream.writeObject(messages);
+            ChatHistory chatHistory = handler.getChatHistory();
+            objectOutputStream.writeObject(chatHistory);
             byte[] bytes = byteArrayOutputStream.toByteArray();
             preparedStatement.setBytes(1, bytes);
             preparedStatement.setString(2, client.getLogin());
