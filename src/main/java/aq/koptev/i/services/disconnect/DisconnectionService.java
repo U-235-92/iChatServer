@@ -12,7 +12,9 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 
 public class DisconnectionService {
 
@@ -27,19 +29,64 @@ public class DisconnectionService {
     }
 
     public void processDisconnection() {
-        writeChatHistory();
+        if(isDbChatHistoryEmpty()) {
+            insertChatHistory();
+        } else {
+            updateChatHistory();
+        }
         sendDisconnectionMessage();
         closeConnection();
     }
 
-    private void writeChatHistory() {
-        String sql = "UPDATE Chats SET chatHistory = ? WHERE userId = (SELECT userId FROM Users WHERE login = ?)";
+    private boolean isDbChatHistoryEmpty() {
+        String sql = "SELECT chatId FROM Chats WHERE userId = (SELECT userId FROM Users WHERE login = ?)";
+        try(Connection connection = connector.getConnection(SQLiteConnector.DEFAULT_DB_URL);
+            PreparedStatement preparedStatement = connector.getPreparedStatement(connection, sql)) {
+            Client client = handler.getClient();
+            preparedStatement.setString(1, client.getLogin());
+            ResultSet rs = preparedStatement.executeQuery();
+            if(rs.next()) {
+                return false;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        return true;
+    }
+
+    private void insertChatHistory() {
+        String sql = "INSERT INTO Chats (userID, chatHistory) VALUES ((SELECT userId FROM Users WHERE login = ?), ?)";
         try(Connection connection = connector.getConnection(SQLiteConnector.DEFAULT_DB_URL);
                 PreparedStatement preparedStatement = connector.getPreparedStatement(connection, sql);
                 ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
                 ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream)) {
             Client client = handler.getClient();
-            objectOutputStream.writeObject(handler.getChatHistory().getMessages());
+            List<Message> messages = handler.getChatHistory().getMessages();
+            objectOutputStream.writeObject(messages);
+            byte[] bytes = byteArrayOutputStream.toByteArray();
+            preparedStatement.setString(1, client.getLogin());
+            preparedStatement.setBytes(2, bytes);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void updateChatHistory() {
+        String sql = "UPDATE Chats SET chatHistory = ? WHERE userId = (SELECT userId FROM Users WHERE login = ?)";
+        try(Connection connection = connector.getConnection(SQLiteConnector.DEFAULT_DB_URL);
+            PreparedStatement preparedStatement = connector.getPreparedStatement(connection, sql);
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream)) {
+            Client client = handler.getClient();
+            List<Message> messages = handler.getChatHistory().getMessages();
+            objectOutputStream.writeObject(messages);
             byte[] bytes = byteArrayOutputStream.toByteArray();
             preparedStatement.setBytes(1, bytes);
             preparedStatement.setString(2, client.getLogin());

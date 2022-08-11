@@ -88,7 +88,7 @@ public class AuthenticationService {
             PreparedStatement preparedStatement = connector.getPreparedStatement(connection, sql)) {
             preparedStatement.setString(1, client.getLogin());
             ResultSet rs = preparedStatement.executeQuery();
-            String password = rs.getString(1);
+            String password = rs.getString(1).trim();
             if(client.getPassword().equals(password)) {
                 return true;
             }
@@ -100,17 +100,19 @@ public class AuthenticationService {
 
     private ChatHistory getChatHistory(Client client) {
         List<Message> messages = null;
-        String sql = "SELECT chatHistory FROM Chats WHERE userId = (SELECT userID FROM Users WHERE login = ?))";
+        String sql = "SELECT chatHistory FROM Chats WHERE userId = (SELECT userID FROM Users WHERE login = ?)";
         try(Connection connection = connector.getConnection(SQLiteConnector.DEFAULT_DB_URL);
             PreparedStatement preparedStatement = connector.getPreparedStatement(connection, sql)) {
             preparedStatement.setString(1, client.getLogin());
             ResultSet rs = preparedStatement.executeQuery();
-            byte[] buf = rs.getBytes(1);
-            if(buf != null) {
-                try (ObjectInputStream objectInputStream = new ObjectInputStream(new ByteArrayInputStream(buf))) {
-                    messages = (List<Message>) objectInputStream.readObject();
-                } catch (IOException e) {
-                    e.printStackTrace();
+            if(rs.next()) {
+                byte[] buf = rs.getBytes(1);
+                if(buf != null) {
+                    try (ObjectInputStream objectInputStream = new ObjectInputStream(new ByteArrayInputStream(buf))) {
+                        messages = (List<Message>) objectInputStream.readObject();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         } catch (SQLException e) {
@@ -119,7 +121,9 @@ public class AuthenticationService {
             e.printStackTrace();
         }
         ChatHistory chatHistory = new ChatHistory();
-        chatHistory.addAll(messages);
+        if(messages != null) {
+            chatHistory.addAll(messages);
+        }
         return chatHistory;
     }
 
