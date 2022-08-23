@@ -2,6 +2,8 @@ package aq.koptev.i.models;
 
 import aq.koptev.i.util.ParameterNetObject;
 import aq.koptev.i.util.TypeNetObject;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PropertyConfigurator;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -12,6 +14,7 @@ import java.util.List;
 public class Server {
 
     private static final int DEFAULT_PORT = 5082;
+    private Logger infoLogger;
     private Socket clientSocket;
     private ServerSocket serverSocket;
     private List<Handler> handlers;
@@ -25,13 +28,17 @@ public class Server {
         this.port = port;
         serverSocket = new ServerSocket(port);
         handlers = new ArrayList<>();
+        PropertyConfigurator.configure("src/main/resources/logs/configs/log4j.properties");
+        infoLogger = Logger.getLogger("infoLogger");
     }
 
     public void launch() throws IOException {
+        infoLogger.info("Запуск работы сервера!");
         while (true) {
             System.out.println("Wait connection...");
             clientSocket = serverSocket.accept();
             System.out.println("Connection is success!");
+            infoLogger.info("Новое соединенние с сервером!");
             Handler clientConnection = new Handler(this, clientSocket);
             clientConnection.handle();
         }
