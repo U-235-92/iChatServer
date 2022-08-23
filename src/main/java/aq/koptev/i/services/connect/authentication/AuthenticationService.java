@@ -1,12 +1,6 @@
 package aq.koptev.i.services.connect.authentication;
 
-import aq.koptev.i.models.Handler;
-import aq.koptev.i.models.Server;
-import aq.koptev.i.models.NetObject;
-import aq.koptev.i.models.ChatHistory;
-import aq.koptev.i.models.Client;
-import aq.koptev.i.models.ClientPool;
-import aq.koptev.i.models.Message;
+import aq.koptev.i.models.*;
 import aq.koptev.i.services.db.DBConnector;
 import aq.koptev.i.services.db.SQLiteConnector;
 import aq.koptev.i.util.ParameterNetObject;
@@ -40,6 +34,7 @@ public class AuthenticationService {
         boolean isSuccessAuthentication = false;
         if(isExistAccount(client)) {
             if(isAuthorizeAccount(handler, client)) {
+                ChatLogger.infoFile(String.format("Попытка повторной авторизации пользователя с логином %s", client.getLogin()));
                 String text = String.format("Пользователь с логином %s уже авторизован", client.getLogin());
                 sendErrorMessage(text);
             } else {

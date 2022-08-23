@@ -2,8 +2,6 @@ package aq.koptev.i.services.message;
 
 import aq.koptev.i.models.Server;
 import aq.koptev.i.models.NetObject;
-import aq.koptev.i.models.Message;
-import aq.koptev.i.util.ParameterNetObject;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;

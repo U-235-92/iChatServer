@@ -1,9 +1,6 @@
 package aq.koptev.i.services.connect;
 
-import aq.koptev.i.models.Handler;
-import aq.koptev.i.models.Server;
-import aq.koptev.i.models.NetObject;
-import aq.koptev.i.models.Client;
+import aq.koptev.i.models.*;
 import aq.koptev.i.services.connect.authentication.AuthenticationService;
 import aq.koptev.i.services.connect.registration.RegistrationService;
 import aq.koptev.i.util.ParameterNetObject;
@@ -27,9 +24,9 @@ public class IdentificationService {
     }
 
     public void processIdentification() throws IOException, ClassNotFoundException {
+        Client client = null;
         while(!isSuccessAuthentication) {
             NetObject netObject = (NetObject) objectInputStream.readObject();
-            Client client = null;
                     switch (netObject.getType()) {
                 case REQUEST_AUTHENTICATION:
                     client = NetObject.getObject(netObject.getData(ParameterNetObject.CLIENT));
@@ -41,5 +38,6 @@ public class IdentificationService {
                     break;
             }
         }
+        ChatLogger.infoFile(String.format("Пользователь %s подключился к чату", client.getLogin()));
     }
 }

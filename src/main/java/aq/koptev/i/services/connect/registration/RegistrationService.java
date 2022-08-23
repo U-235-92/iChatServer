@@ -1,5 +1,6 @@
 package aq.koptev.i.services.connect.registration;
 
+import aq.koptev.i.models.ChatLogger;
 import aq.koptev.i.models.NetObject;
 import aq.koptev.i.models.Client;
 import aq.koptev.i.models.Message;
@@ -57,10 +58,13 @@ public class RegistrationService {
             preparedStatement.setString(2, client.getPassword());
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
+            ChatLogger.errorFile(String.format("Ошибка регистрации пользователя с логином %s", client.getLogin()), getClass());
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
+            ChatLogger.errorFile(String.format("Ошибка регистрации пользователя с логином %s", client.getLogin()), getClass());
             e.printStackTrace();
         }
+        ChatLogger.infoFile(String.format("Успешная регистрация пользователя с логином %s", client.getLogin()));
         String text = "Регистрация успешно завершена";
         sendTextMessage(text);
     }

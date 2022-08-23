@@ -116,6 +116,7 @@ public class DisconnectionService {
 
     private void closeConnection() {
         try {
+            ChatLogger.infoFile(String.format("Пользователь %s отключился от чата", handler.getClient().getLogin()));
             handler.closeConnection();
             server.removeHandler(handler);
         } catch (IOException e) {
